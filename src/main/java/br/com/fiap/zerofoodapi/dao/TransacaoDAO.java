@@ -47,11 +47,13 @@ public class TransacaoDAO implements DAO<Transacao> {
 
     @Override
     public Optional<Transacao> buscarPorId(Long id) throws SQLException {
-        String sql = "SELECT t.*, a.id_insumo, i.nome AS nome_insumo, l.nome_fantasia AS nome_comprador " +
+        String sql = "SELECT t.*, a.id_insumo, i.nome AS nome_insumo, l.nome_fantasia AS nome_comprador, " +
+                "v.id_lojista AS id_lojista_vendedor, v.nome_fantasia AS nome_vendedor " +
                 "FROM TB_ZF_TRANSACAO t " +
                 "INNER JOIN TB_ZF_ANUNCIO a ON t.id_anuncio = a.id_anuncio " +
                 "INNER JOIN TB_ZF_INSUMO i ON a.id_insumo = i.id_insumo " +
                 "INNER JOIN TB_ZF_LOJISTA l ON t.id_lojista_comprador = l.id_lojista " +
+                "INNER JOIN TB_ZF_LOJISTA v ON a.id_lojista = v.id_lojista " +
                 "WHERE t.id_transacao = ?";
 
         try (Connection conn = connectionFactory.getConnection();
@@ -70,11 +72,13 @@ public class TransacaoDAO implements DAO<Transacao> {
 
     @Override
     public List<Transacao> listarTodos() throws SQLException {
-        String sql = "SELECT t.*, a.id_insumo, i.nome AS nome_insumo, l.nome_fantasia AS nome_comprador " +
+        String sql = "SELECT t.*, a.id_insumo, i.nome AS nome_insumo, l.nome_fantasia AS nome_comprador, " +
+                "v.id_lojista AS id_lojista_vendedor, v.nome_fantasia AS nome_vendedor " +
                 "FROM TB_ZF_TRANSACAO t " +
                 "INNER JOIN TB_ZF_ANUNCIO a ON t.id_anuncio = a.id_anuncio " +
                 "INNER JOIN TB_ZF_INSUMO i ON a.id_insumo = i.id_insumo " +
                 "INNER JOIN TB_ZF_LOJISTA l ON t.id_lojista_comprador = l.id_lojista " +
+                "INNER JOIN TB_ZF_LOJISTA v ON a.id_lojista = v.id_lojista " +
                 "ORDER BY t.data_hora DESC";
         List<Transacao> transacoes = new ArrayList<>();
 
@@ -128,16 +132,25 @@ public class TransacaoDAO implements DAO<Transacao> {
         String strStatus = rs.getString("status");
         if (strStatus != null && !strStatus.isEmpty()) t.setStatus(strStatus.charAt(0));
 
+        // Monta o Anúncio
         Anuncio anuncio = new Anuncio();
         anuncio.setIdAnuncio(rs.getLong("id_anuncio"));
 
+        // Monta o Insumo
         Insumo insumo = new Insumo();
         insumo.setIdInsumo(rs.getLong("id_insumo"));
         insumo.setNome(rs.getString("nome_insumo"));
         anuncio.setInsumo(insumo);
 
+        // NOVO: Monta o Lojista Vendedor (dono do anúncio) dentro do Anúncio
+        Lojista vendedor = new Lojista();
+        vendedor.setIdLojista(rs.getLong("id_lojista_vendedor"));
+        vendedor.setNomeFantasia(rs.getString("nome_vendedor"));
+        anuncio.setLojista(vendedor);
+
         t.setAnuncio(anuncio);
 
+        // Monta o Lojista Comprador
         Lojista comprador = new Lojista();
         comprador.setIdLojista(rs.getLong("id_lojista_comprador"));
         comprador.setNomeFantasia(rs.getString("nome_comprador"));
