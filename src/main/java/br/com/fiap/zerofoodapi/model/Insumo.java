@@ -2,7 +2,7 @@ package br.com.fiap.zerofoodapi.model;
 
 public class Insumo {
     private Long idInsumo;
-    private Categoria categoria; // Relacionamento 1:N
+    private Categoria categoria;
     private String nome;
     private String unidadeMedida;
 
